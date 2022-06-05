@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    group = 'me.hammer86gn'
+    version = '1.0.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+
+        maven {
+            name = 'Jitpack'
+            url = 'https://jitpack.io'
+        }
+
+    }
+
+    dependencies {
+        implementation 'com.github.luben:zstd-jni:1.5.2-3'
+        implementation 'com.github.Querz:NBT:6.1'
+
+        compileOnly 'org.jetbrains:annotations:23.0.0'
+    }
+
+    processResources {
+        expand(project: project)
+    }
+
+    build {
+        dependsOn {
+            shadowJar
+        }
+    }
+
+}

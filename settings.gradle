@@ -1,0 +1,6 @@
+rootProject.name = 'ChloeSlimeWorld'
+include 'slime-api'
+include 'slime-common'
+include 'slime-nms1_18'
+include 'slime-bridge'
+

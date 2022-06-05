@@ -1,0 +1,24 @@
+name: ChloeSlimeWorld
+version: ${project.version}
+description: Implements the SlimeWorld format
+website: github.com/Hammer86gn/ChloeSlimeWorld
+authors:
+  - Chloe
+
+main: me.hammer86gn.chloeslimeworld.bridge.ChloeSlimeWorldPlugin
+load: STARTUP
+
+permissions:
+  csw.admin:
+    description: Allows admin permissions for ChloeSlimeWorld... Only give this to trusted people
+    default: op
+
+commands:
+  chloeslimeworld:
+    description: The base command for ChloeSlimeWorld
+    permission: csw.admin
+    permission-message: You are lacking permission to use ChloeSlimeWorld admin commands; please contact a server administrator if you believe this is wrong.
+    aliases:
+      - csw
+      - swadmin
+      - cswadmin
