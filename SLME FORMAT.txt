@@ -11,7 +11,7 @@
 [depends] - chunk bitmask
   -> each chunk is 1 bit: 0 if all air (missing), 1 if present
   -> chunks are ordered zx, meaning
-  -> the last byte has unused bits on the right
+  -> the last byte has unused bits on the rightwda
   -> size is ceil((width*depth) / 8) bytes
 
 4 bytes (int) - compressed chunks size

@@ -14,17 +14,11 @@ subprojects {
     repositories {
         mavenCentral()
         mavenLocal()
-
-        maven {
-            name = 'Jitpack'
-            url = 'https://jitpack.io'
-        }
-
     }
 
     dependencies {
         implementation 'com.github.luben:zstd-jni:1.5.2-3'
-        implementation 'com.github.Querz:NBT:6.1'
+        implementation 'dev.dewy:nbt:1.5.1'
 
         compileOnly 'org.jetbrains:annotations:23.0.0'
     }
