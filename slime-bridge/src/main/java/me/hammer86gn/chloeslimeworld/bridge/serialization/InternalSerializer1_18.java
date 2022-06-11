@@ -1,26 +1,67 @@
 package me.hammer86gn.chloeslimeworld.bridge.serialization;
 
 
+import me.hammer86gn.chloeslimeworld.api.slime.SlimeChunk;
 import me.hammer86gn.chloeslimeworld.api.slime.SlimeChunkSection;
 import me.hammer86gn.chloeslimeworld.api.utils.ByteUtil;
+import me.hammer86gn.chloeslimeworld.common.slime.SlimeChunkImpl;
 import me.hammer86gn.chloeslimeworld.common.slime.SlimeChunkSectionImpl;
 import dev.dewy.nbt.tags.collection.CompoundTag;
+
+import java.util.ArrayList;
+import java.util.List;
 
 class InternalSerializer1_18 {
 
     private InternalSerializer1_18() {}
 
+    private static SlimeChunk loadChunk(byte[] chunkData, int x, int z, int refPos) {
 
-    private static SlimeChunkSection loadChunkSection(byte[] sectionData) {
-        int posY = ByteUtil.byteToInteger(sectionData, 0);
+        int heightmapSize = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        byte[] rawHeightmap = new byte[heightmapSize];
+        System.arraycopy(chunkData, refPos, rawHeightmap, 0, heightmapSize); refPos += heightmapSize;
+        CompoundTag heightmap = ByteUtil.byteToCompound(rawHeightmap);
+
+        int biomesSize = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        int[] biomes = new int[biomesSize];
+
+        for (int i = 0; i < biomesSize; i++) {
+            biomes[i] = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        }
+
+        int minSectionY = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        int maxSectionY = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        int sectionCount = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+
+        List<SlimeChunkSection> chunkSections = new ArrayList<>();
+
+        for (int i = 0; i < sectionCount; i++) {
+            chunkSections.add(InternalSerializer1_18.loadChunkSection(chunkData, refPos));
+        }
+
+        SlimeChunkImpl slimeChunk = new SlimeChunkImpl(x, z);
+        slimeChunk.setHeightMap(heightmap);
+        slimeChunk.setBiomes(biomes);
+        slimeChunk.setMinSectionY(minSectionY);
+        slimeChunk.setMaxSectionY(maxSectionY);
+        slimeChunk.setSections(chunkSections);
+
+        return slimeChunk;
+    }
+
+    private static SlimeChunkSection loadChunkSection(byte[] sectionData, int refPos) {
+
+
+        int posY = ByteUtil.byteToInteger(sectionData, refPos);
         byte[] blockLight = new byte[2048];
 
-        int refPos = 4;
+        refPos += 4;
 
-        if (ByteUtil.byteToBool(sectionData[4])) {
-            System.arraycopy(sectionData, 4, blockLight, 0, 2048);
+        if (ByteUtil.byteToBool(sectionData[refPos])) {
+            System.arraycopy(sectionData, refPos + 1, blockLight, 0, 2048);
             refPos += 2049;
         }
+        refPos += 1;
 
         int blockStatesByteSize = ByteUtil.byteToInteger(sectionData, refPos); refPos += 4;
         byte[] blockStates = new byte[blockStatesByteSize];
