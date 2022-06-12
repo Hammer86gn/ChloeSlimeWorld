@@ -28,6 +28,10 @@ public class ByteUtil {
         return (int) ((int) bytes[start] + (int) bytes[start + 1] + (int) bytes[start + 2] + (int) bytes[start + 3]);
     }
 
+    public static int byteToUShortAsInt(byte[] bytes, int start) {
+        return (int) ((int) bytes[start] + (int) bytes[start + 1]);
+    }
+
     public static short byteToShort(byte[] bytes, int start) {
         return (short) ((short) bytes[start] + (short) bytes[start + 1]);
     }

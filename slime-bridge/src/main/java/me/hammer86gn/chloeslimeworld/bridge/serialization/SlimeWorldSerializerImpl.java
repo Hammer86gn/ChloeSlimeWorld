@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SlimeWorldSerializerImpl implements WorldSerializer {
 
@@ -31,8 +32,8 @@ public class SlimeWorldSerializerImpl implements WorldSerializer {
 
         switch(worldVersion) {
             case V1_18 -> {
-                slimeWorld = InternalSerializer1_18.load(worldData, options);
-            } // TODO this
+                slimeWorld = InternalSerializer1_18.load(worldData, worldName, options, readOnly, new AtomicInteger(4));
+            }
             default -> System.out.println("Support for legacy worlds has not been Implemented");
         }
 

@@ -3,12 +3,16 @@ package me.hammer86gn.chloeslimeworld.bridge.serialization;
 
 import me.hammer86gn.chloeslimeworld.api.slime.SlimeChunk;
 import me.hammer86gn.chloeslimeworld.api.slime.SlimeChunkSection;
+import me.hammer86gn.chloeslimeworld.api.slime.SlimeWorld;
+import me.hammer86gn.chloeslimeworld.api.slime.options.SlimeWorldOptions;
 import me.hammer86gn.chloeslimeworld.api.utils.ByteUtil;
+import me.hammer86gn.chloeslimeworld.api.utils.SlimeUtil;
 import me.hammer86gn.chloeslimeworld.api.utils.ZstdUtil;
 import me.hammer86gn.chloeslimeworld.common.slime.SlimeChunkImpl;
 import me.hammer86gn.chloeslimeworld.common.slime.SlimeChunkSectionImpl;
 import dev.dewy.nbt.tags.collection.CompoundTag;
 import dev.dewy.nbt.tags.collection.ListTag;
+import me.hammer86gn.chloeslimeworld.common.slime.SlimeWorldImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +22,67 @@ import java.util.concurrent.atomic.AtomicInteger;
 class InternalSerializer1_18 {
 
     private InternalSerializer1_18() {}
+
+    static SlimeWorld load(byte[] worldData, String name, SlimeWorldOptions options, boolean readOnly, AtomicInteger refPos) {
+        SlimeWorld world;
+        List<SlimeChunk> chunks = new ArrayList<>();
+        List<CompoundTag> tileEntities = new ArrayList<>();
+        List<CompoundTag> entities = new ArrayList<>();
+        CompoundTag extra;
+        List<CompoundTag> worldMaps = new ArrayList<>();
+
+        int lowestX, lowestZ;
+        lowestX = ByteUtil.byteToShort(worldData, refPos.get()); refPos.set(refPos.get() + 2);
+        lowestZ = ByteUtil.byteToShort(worldData, refPos.get()); refPos.set(refPos.get() + 2);
+
+        int width, depth;
+        width = ByteUtil.byteToUShortAsInt(worldData, refPos.get()); refPos.set(refPos.get() + 2);
+        depth = ByteUtil.byteToUShortAsInt(worldData, refPos.get()); refPos.set(refPos.get() + 2);
+
+        int bitmaskSize = (int) Math.ceil((float) (width * depth) / 8);
+        byte[] bitmask = new byte[bitmaskSize];
+        System.arraycopy(worldData, refPos.get(), bitmask, 0, bitmaskSize);
+        refPos.set(refPos.get() + bitmaskSize);
+
+        int uncompressed, compressed;
+        uncompressed = ByteUtil.byteToShort(worldData, refPos.get()); refPos.set(refPos.get() + 2);
+        compressed = ByteUtil.byteToShort(worldData, refPos.get()); refPos.set(refPos.get() + 2);
+
+        byte[] compressedChunks = new byte[compressed];
+        int chunkArraySize = SlimeUtil.getSlimeChunkArraySize(bitmask);
+        System.arraycopy(worldData, refPos.get(), compressedChunks, 0, chunkArraySize);
+        refPos.set(refPos.get() + chunkArraySize);
+
+        byte[] chunkData = ZstdUtil.decompress(compressedChunks, uncompressed);
+
+        int chunkX = lowestX;
+        int chunkZ = lowestZ;
+
+        for (int i = 0; i < chunkArraySize; i++) {
+            int bitmaskIndex = chunkX + chunkZ * 8;
+
+            if (SlimeUtil.slimeChunkDataEmpty(bitmask[bitmaskIndex], chunkX + chunkZ)) {
+                chunks.add(InternalSerializer1_18.loadChunk(chunkData, chunkX, chunkZ, refPos));
+            }  else {
+                i -= 1;
+            }
+            chunkZ += 1;
+
+            if (chunkZ == depth) {
+                chunkZ = 0;
+                chunkX += 1;
+            }
+
+        }
+
+        tileEntities = InternalSerializer1_18.loadTileEntities(worldData, refPos);
+        entities = InternalSerializer1_18.loadEntities(worldData, refPos);
+        extra = InternalSerializer1_18.loadExtra(worldData, refPos);
+        worldMaps = InternalSerializer1_18.loadWorldMaps(worldData, refPos);
+
+        world = new SlimeWorldImpl(name, SlimeUtil.WorldVersion.V1_18, chunks, tileEntities, entities, extra, worldMaps, options, readOnly);
+        return world;
+    }
 
     private static SlimeChunk loadChunk(byte[] chunkData, int x, int z, AtomicInteger refPos) {
 

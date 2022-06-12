@@ -58,6 +58,10 @@ public class SlimeUtil {
         return count;
     }
 
+    public static boolean slimeChunkDataEmpty(byte b, int bit) {
+        return (b >> bit & 1) == 1;
+    }
+
     public static @Nullable WorldVersion getWorldVersion(byte[] data) {
         return WorldVersion.of(data[3]);
     }
