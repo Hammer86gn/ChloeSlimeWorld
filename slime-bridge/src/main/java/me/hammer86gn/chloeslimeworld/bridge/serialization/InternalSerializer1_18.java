@@ -137,4 +137,18 @@ class InternalSerializer1_18 {
 
         return entities;
     }
+
+    private static CompoundTag loadExtra(byte[] data, AtomicInteger refPos) {
+        int compressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
+        int uncompressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
+
+        byte[] rawExtra = new byte[compressedSize];
+        System.arraycopy(data, refPos.get(), rawExtra, 0, compressedSize);
+        refPos.set(refPos.get() + compressedSize);
+
+        byte[] decompress = ZstdUtil.decompress(rawExtra, uncompressedSize);
+
+        return ByteUtil.byteToCompound(decompress);
+    }
+
 }
