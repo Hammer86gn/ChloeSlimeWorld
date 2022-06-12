@@ -100,9 +100,8 @@ class InternalSerializer1_18 {
         int uncompressedSize = ByteUtil.byteToInteger(data, refPos); refPos += 4;
 
         byte[] rawData = new byte[compressedSize];
-        for (int i = 0; i < compressedSize; i++) {
-            rawData[i] = data[refPos + i];
-        } refPos += compressedSize;
+        System.arraycopy(data, refPos, rawData, 0, compressedSize);
+        refPos += compressedSize;
 
         rawData = ZstdUtil.decompress(rawData, uncompressedSize);
         CompoundTag globalTag = ByteUtil.byteToCompound(rawData);
