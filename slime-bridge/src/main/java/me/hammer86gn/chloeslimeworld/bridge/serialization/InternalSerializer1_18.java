@@ -151,4 +151,25 @@ class InternalSerializer1_18 {
         return ByteUtil.byteToCompound(decompress);
     }
 
+    private static List<CompoundTag> loadWorldMaps(byte[] data, AtomicInteger refPos) {
+        List<CompoundTag> worldMapsNBT = new ArrayList<>();
+
+        int compressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
+        int uncompressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
+
+        byte[] worldMap = new byte[compressedSize];
+        System.arraycopy(data, refPos.get(), worldMap, 0, compressedSize);
+        refPos.set(refPos.get() + compressedSize);
+
+        byte[] decompressed = ZstdUtil.decompress(worldMap, uncompressedSize);
+        CompoundTag globalTag = ByteUtil.byteToCompound(decompressed);
+
+        ListTag<CompoundTag> maps = globalTag.getList("maps");
+        for (CompoundTag tag : maps) {
+            worldMapsNBT.add(tag);
+        }
+
+        return worldMapsNBT;
+    }
+
 }
