@@ -75,7 +75,7 @@ Custom chunk format
     4 bytes (int) - block states byte size
     <block states component>
     4 bytes (int) - biomes byte size
-    <biomes component>int
+    <biomes component>
   [else if world mc version is 1.13 or newer]
     4 bytes (int) - block palette array size
     <array of block palette nbt compounds>

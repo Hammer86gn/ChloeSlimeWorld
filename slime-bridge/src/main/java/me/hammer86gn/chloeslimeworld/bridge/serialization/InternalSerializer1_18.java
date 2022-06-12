@@ -4,9 +4,11 @@ package me.hammer86gn.chloeslimeworld.bridge.serialization;
 import me.hammer86gn.chloeslimeworld.api.slime.SlimeChunk;
 import me.hammer86gn.chloeslimeworld.api.slime.SlimeChunkSection;
 import me.hammer86gn.chloeslimeworld.api.utils.ByteUtil;
+import me.hammer86gn.chloeslimeworld.api.utils.ZstdUtil;
 import me.hammer86gn.chloeslimeworld.common.slime.SlimeChunkImpl;
 import me.hammer86gn.chloeslimeworld.common.slime.SlimeChunkSectionImpl;
 import dev.dewy.nbt.tags.collection.CompoundTag;
+import dev.dewy.nbt.tags.collection.ListTag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +91,28 @@ class InternalSerializer1_18 {
         section.setSkyLight(skylight);
 
         return section;
+    }
+
+    private static List<CompoundTag> loadTileEntities(byte[] data, int refPos) {
+        List<CompoundTag> tileEntities = new ArrayList<>();
+
+        int compressedSize = ByteUtil.byteToInteger(data, refPos); refPos += 4;
+        int uncompressedSize = ByteUtil.byteToInteger(data, refPos); refPos += 4;
+
+        byte[] rawData = new byte[compressedSize];
+        for (int i = 0; i < compressedSize; i++) {
+            rawData[i] = data[refPos + i];
+        } refPos += compressedSize;
+
+        rawData = ZstdUtil.decompress(rawData, uncompressedSize);
+        CompoundTag globalTag = ByteUtil.byteToCompound(rawData);
+        ListTag<CompoundTag> tileEntitiesNBTList = globalTag.getList("tiles");
+
+        for (CompoundTag tag : tileEntitiesNBTList) {
+            tileEntities.add(tag);
+        }
+
+        return tileEntities;
     }
 
 }
