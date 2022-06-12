@@ -12,28 +12,29 @@ import dev.dewy.nbt.tags.collection.ListTag;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class InternalSerializer1_18 {
 
     private InternalSerializer1_18() {}
 
-    private static SlimeChunk loadChunk(byte[] chunkData, int x, int z, int refPos) {
+    private static SlimeChunk loadChunk(byte[] chunkData, int x, int z, AtomicInteger refPos) {
 
-        int heightmapSize = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        int heightmapSize = ByteUtil.byteToInteger(chunkData, refPos.get()); refPos.set(refPos.get() + 4);
         byte[] rawHeightmap = new byte[heightmapSize];
-        System.arraycopy(chunkData, refPos, rawHeightmap, 0, heightmapSize); refPos += heightmapSize;
+        System.arraycopy(chunkData, refPos.get(), rawHeightmap, 0, heightmapSize); refPos.set(refPos.get() + heightmapSize);
         CompoundTag heightmap = ByteUtil.byteToCompound(rawHeightmap);
 
-        int biomesSize = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        int biomesSize = ByteUtil.byteToInteger(chunkData, refPos.get()); refPos.set(refPos.get() + 4);
         int[] biomes = new int[biomesSize];
 
         for (int i = 0; i < biomesSize; i++) {
-            biomes[i] = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+            biomes[i] = ByteUtil.byteToInteger(chunkData, refPos.get()); refPos.set(refPos.get() + 4);
         }
 
-        int minSectionY = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
-        int maxSectionY = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
-        int sectionCount = ByteUtil.byteToInteger(chunkData, refPos); refPos += 4;
+        int minSectionY = ByteUtil.byteToInteger(chunkData, refPos.get()); refPos.set(refPos.get() + 4);
+        int maxSectionY = ByteUtil.byteToInteger(chunkData, refPos.get()); refPos.set(refPos.get() + 4);
+        int sectionCount = ByteUtil.byteToInteger(chunkData, refPos.get()); refPos.set(refPos.get() + 4);
 
         List<SlimeChunkSection> chunkSections = new ArrayList<>();
 
@@ -51,37 +52,37 @@ class InternalSerializer1_18 {
         return slimeChunk;
     }
 
-    private static SlimeChunkSection loadChunkSection(byte[] sectionData, int refPos) {
+    private static SlimeChunkSection loadChunkSection(byte[] sectionData, AtomicInteger refPos) {
 
 
-        int posY = ByteUtil.byteToInteger(sectionData, refPos);
+        int posY = ByteUtil.byteToInteger(sectionData, refPos.get());
         byte[] blockLight = new byte[2048];
 
-        refPos += 4;
+        refPos.set(refPos.get() + 4);
 
-        if (ByteUtil.byteToBool(sectionData[refPos])) {
-            System.arraycopy(sectionData, refPos + 1, blockLight, 0, 2048);
-            refPos += 2049;
+        if (ByteUtil.byteToBool(sectionData[refPos.get()])) {
+            System.arraycopy(sectionData, refPos.getAndIncrement(), blockLight, 0, 2048);
+            refPos.set(refPos.get() + 2049);
         }
-        refPos += 1;
+        refPos.set(refPos.get() + 1);
 
-        int blockStatesByteSize = ByteUtil.byteToInteger(sectionData, refPos); refPos += 4;
+        int blockStatesByteSize = ByteUtil.byteToInteger(sectionData, refPos.get()); refPos.set(refPos.get() + 4);
         byte[] blockStates = new byte[blockStatesByteSize];
-        System.arraycopy(sectionData, refPos, blockStates, 0, blockStatesByteSize); refPos += blockStatesByteSize;
+        System.arraycopy(sectionData, refPos.get(), blockStates, 0, blockStatesByteSize); refPos.set(refPos.get() + blockStatesByteSize);
 
         CompoundTag blockStatesNBT = ByteUtil.byteToCompound(blockStates); // If these are compressed, this will break... Only one way to find out
 
-        int biomesByteSize = ByteUtil.byteToInteger(sectionData, refPos); refPos += 4;
+        int biomesByteSize = ByteUtil.byteToInteger(sectionData, refPos.get()); refPos.set(refPos.get() + 4);
         byte[] biomes = new byte[biomesByteSize];
-        System.arraycopy(sectionData, refPos, biomes, 0, biomesByteSize); refPos += biomesByteSize;
+        System.arraycopy(sectionData, refPos.get(), biomes, 0, biomesByteSize); refPos.set(refPos.get() + biomesByteSize);
 
 
         CompoundTag biomesNBT = ByteUtil.byteToCompound(biomes); // If these are compressed, this will break... Only one way to find out
 
         byte[] skylight = new byte[2048];
-        if (ByteUtil.byteToBool(sectionData[refPos])) {
-            refPos += 1;
-            System.arraycopy(sectionData, refPos, skylight, 0, 2048); refPos += 2049;
+        if (ByteUtil.byteToBool(sectionData[refPos.get()])) {
+            refPos.set(refPos.get() + 1);
+            System.arraycopy(sectionData, refPos.get(), skylight, 0, 2048); refPos.set(refPos.get() + 2049);
         }
 
         SlimeChunkSectionImpl section = new SlimeChunkSectionImpl(posY);
@@ -93,15 +94,15 @@ class InternalSerializer1_18 {
         return section;
     }
 
-    private static List<CompoundTag> loadTileEntities(byte[] data, int refPos) {
+    private static List<CompoundTag> loadTileEntities(byte[] data, AtomicInteger refPos) {
         List<CompoundTag> tileEntities = new ArrayList<>();
 
-        int compressedSize = ByteUtil.byteToInteger(data, refPos); refPos += 4;
-        int uncompressedSize = ByteUtil.byteToInteger(data, refPos); refPos += 4;
+        int compressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
+        int uncompressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
 
         byte[] rawData = new byte[compressedSize];
-        System.arraycopy(data, refPos, rawData, 0, compressedSize);
-        refPos += compressedSize;
+        System.arraycopy(data, refPos.get(), rawData, 0, compressedSize);
+        refPos.set(refPos.get() + compressedSize);
 
         rawData = ZstdUtil.decompress(rawData, uncompressedSize);
         CompoundTag globalTag = ByteUtil.byteToCompound(rawData);
