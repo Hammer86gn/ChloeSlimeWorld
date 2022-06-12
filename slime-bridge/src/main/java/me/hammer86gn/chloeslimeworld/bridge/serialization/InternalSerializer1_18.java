@@ -11,6 +11,7 @@ import dev.dewy.nbt.tags.collection.CompoundTag;
 import dev.dewy.nbt.tags.collection.ListTag;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -104,8 +105,9 @@ class InternalSerializer1_18 {
         System.arraycopy(data, refPos.get(), rawData, 0, compressedSize);
         refPos.set(refPos.get() + compressedSize);
 
-        rawData = ZstdUtil.decompress(rawData, uncompressedSize);
-        CompoundTag globalTag = ByteUtil.byteToCompound(rawData);
+        byte[] decompressed = new byte[uncompressedSize];
+        decompressed = ZstdUtil.decompress(rawData, uncompressedSize);
+        CompoundTag globalTag = ByteUtil.byteToCompound(decompressed);
         ListTag<CompoundTag> tileEntitiesNBTList = globalTag.getList("tiles");
 
         for (CompoundTag tag : tileEntitiesNBTList) {
@@ -115,4 +117,24 @@ class InternalSerializer1_18 {
         return tileEntities;
     }
 
+    private static List<CompoundTag> loadEntities(byte[] data, AtomicInteger refPos) {
+        List<CompoundTag> entities = new ArrayList<>();
+
+        int compressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
+        int uncompressedSize = ByteUtil.byteToInteger(data, refPos.get()); refPos.set(refPos.get() + 4);
+
+        byte[] rawEntity = new byte[compressedSize];
+        System.arraycopy(data, refPos.get(), rawEntity, 0, compressedSize);
+        refPos.set(refPos.get() + compressedSize);
+
+        byte[] decompressed = ZstdUtil.decompress(rawEntity, uncompressedSize);
+        CompoundTag globalNBT = ByteUtil.byteToCompound(decompressed);
+        ListTag<CompoundTag> ents = globalNBT.getList("entities");
+
+        for (CompoundTag tag : ents) {
+            entities.add(tag);
+        }
+
+        return entities;
+    }
 }
